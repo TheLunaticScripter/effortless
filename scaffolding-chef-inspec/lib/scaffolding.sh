@@ -114,14 +114,19 @@ CFG_SPLAY={{cfg.splay}}
 CFG_SPLAY="\${CFG_SPLAY:-1800}"
 CFG_LOG_LEVEL={{cfg.log_level}}
 CFG_LOG_LEVEL="\${CFG_LOG_LEVEL:-warn}"
+{{~#if bind.effortless_settings}}
+CFG_CHEF_LICENSE={{bind.effortless_settings.first.cfg.chef_license}}
+{{~else}}
 CFG_CHEF_LICENSE={{cfg.chef_license.acceptance}}
+{{~/if}}
 CFG_CHEF_LICENSE="\${CFG_CHEF_LICENSE:-undefined}"
 CONFIG="{{pkg.svc_config_path}}/inspec_exec_config.json"
 PROFILE_PATH="{{pkg.path}}/{{pkg.name}}-{{pkg.version}}.tar.gz"
+WAIVER_FILE="{{pkg.svc_config_path}}/waivers.yml"
 
 inspec_cmd()
 {
-  inspec exec \${PROFILE_PATH} --config \${CONFIG} --chef-license \$CFG_CHEF_LICENSE --log-level \$CFG_LOG_LEVEL
+  inspec exec \${PROFILE_PATH} --config \${CONFIG} --attrs \${WAIVER_FILE} --chef-license \$CFG_CHEF_LICENSE --log-level \$CFG_LOG_LEVEL
 }
 
 
@@ -171,13 +176,18 @@ EOF
     "reporter": {
       "cli": {
         "stdout": true
-      }{{#if cfg.automate.enable ~}},
+      },
       "automate" : {
+        {{~#if bind.effortless_settings}}
+        "url": "{{bind.effortless_settings.first.cfg.automate_url}}/data-collector/v0/",
+        "token": "{{bind.effortless_settings.first.cfg.automate_token}}",
+        {{~else}}
         "url": "{{cfg.automate.server_url}}/data-collector/v0/",
         "token": "{{cfg.automate.token}}",
+        {{~/if}}
         "node_name": "{{ sys.hostname }}",
         "verify_ssl": false
-      }{{/if ~}}
+      }
     }
 }
 EOF
